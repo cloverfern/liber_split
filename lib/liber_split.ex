@@ -3,7 +3,8 @@ defmodule LiberSplit do
   Documentation for `LiberSplit`.
   """
 
-  @type status :: :ok | :error
+  @type error :: :einvsplit
+  @type split :: %{pos_integer=>float}
 
   @doc """
   `split_evenly` Takes in an amount and a list of identifiers to split the amount evenly between.
@@ -21,11 +22,11 @@ defmodule LiberSplit do
   iex> LiberSplit.split_evenly(100.0, [0, 0, 1, 2, 3, 4])
   %{0=>20.0, 1=>20.0, 2=>20.0, 3=>20.0, 4=>20.0}
   """
-  @spec split_evenly(float, list(pos_integer)) :: %{pos_integer=>float}
+  @spec split_evenly(float, list(pos_integer)) :: split
   def split_evenly(amount, people) do
-    people = Enum.dedup(people)
-    split = amount / length(people)
-    Enum.reduce(people, %{}, fn elem, acc -> Map.put(acc, elem, split) end)
+    split_calc = &(amount / length(&1))
+    split = people |> Enum.dedup() |> split_calc.()
+    Enum.reduce(people, %{}, fn id, split_by_id -> Map.put(split_by_id, id, split) end)
   end
 
   @doc"""
@@ -40,13 +41,20 @@ defmodule LiberSplit do
   iex> LiberSplit.split_percentage(100.0, %{1=>1.1})
   {:error, %{}}
   """
-  @spec split_percentage(float, %{pos_integer=>float}) :: {status, %{pos_integer=>float}}
+  @spec split_percentage(float, split) :: { :ok , split }| { :error, error }
   def split_percentage(amount, percentage_by_id) do
     total = Enum.reduce(percentage_by_id, 0, fn {_, percentage}, total -> total + percentage end)
-    cond do
-      total > 1 -> {:error, %{}}
-      true -> {:ok, Map.new(percentage_by_id, fn {id, percentage} -> {id, amount*percentage} end)}
-    end
+    accept_split_percentage(total, percentage_by_id, amount)
+  end
+
+  defp accept_split_percentage(total, _percentage_by_id, _amount)
+  when total > 1 do
+    {:error, %{}}
+  end
+
+  defp accept_split_percentage(total, percentage_by_id, amount)
+  when total <= 1 do
+    {:ok, Map.new(percentage_by_id, fn {id, percentage} -> {id, amount*percentage} end)}
   end
 
 end
