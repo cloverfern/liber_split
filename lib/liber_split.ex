@@ -39,22 +39,21 @@ defmodule LiberSplit do
   {:ok, %{1=>40.0}}
 
   iex> LiberSplit.split_percentage(100.0, %{1=>1.1})
-  {:error, %{}}
+  {:error, :einvsplit}
+
+  ## TODO
+  Things to consider:
+  - Does this part of the implementation need this validation?
+  - Is it better to implement it somewhere else?
+    - How would we know? What questions can we ask ourselves to get to this answer?
   """
   @spec split_percentage(float, split) :: { :ok , split } | { :error, error }
   def split_percentage(amount, percentage_by_id) do
     total = Enum.reduce(percentage_by_id, 0, fn {_, percentage}, total -> total + percentage end)
-    accept_split_percentage(total, percentage_by_id, amount)
-  end
-
-  defp accept_split_percentage(total, _percentage_by_id, _amount)
-  when total > 1 do
-    {:error, :einvsplit }
-  end
-
-  defp accept_split_percentage(total, percentage_by_id, amount)
-  when total <= 1 do
-    {:ok, Map.new(percentage_by_id, fn {id, percentage} -> {id, amount*percentage} end)}
+    cond do
+      total > 1 -> {:error, :einvsplit}
+      true -> {:ok, Map.new(percentage_by_id, fn {id, percentage} -> {id, amount*percentage} end)}
+    end
   end
 
 end
