@@ -41,7 +41,7 @@ defmodule LiberSplit do
   iex> LiberSplit.split_percentage(100.0, %{1=>1.1})
   {:error, %{}}
   """
-  @spec split_percentage(float, split) :: { :ok , split }| { :error, error }
+  @spec split_percentage(float, split) :: { :ok , split } | { :error, error }
   def split_percentage(amount, percentage_by_id) do
     total = Enum.reduce(percentage_by_id, 0, fn {_, percentage}, total -> total + percentage end)
     accept_split_percentage(total, percentage_by_id, amount)
@@ -49,7 +49,7 @@ defmodule LiberSplit do
 
   defp accept_split_percentage(total, _percentage_by_id, _amount)
   when total > 1 do
-    {:error, %{}}
+    {:error, :einvsplit }
   end
 
   defp accept_split_percentage(total, percentage_by_id, amount)
